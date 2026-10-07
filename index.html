@@ -1,0 +1,752 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>NFL Power Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F4;
+  --panel:#FFFFFF;
+  --ink:#131A17;
+  --ink-2:#4A5550;
+  --ink-3:#7C8782;
+  --line:#DCE2DF;
+  --line-2:#C9D1CD;
+  --afc:#C8102E;
+  --nfc:#0B3A7E;
+  --accent:#1F6B45;
+  --accent-soft:#E3EFE8;
+  --good:#1F7A4A; --good-bg:#E2F2E8;
+  --warn:#9A5B00; --warn-bg:#FBEFD9;
+  --bad:#B42318;  --bad-bg:#FBE6E3;
+  --intl:#5B3FA8; --intl-bg:#ECE7F8;
+  --chip:#EEF1EF;
+  --shadow:0 1px 2px rgba(19,26,23,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1412; --panel:#161D1A; --ink:#E7ECE9; --ink-2:#AEB8B3; --ink-3:#7F8A85;
+    --line:#26302C; --line-2:#34403B; --afc:#FF5A6E; --nfc:#7EA8FF; --accent:#5CC48E; --accent-soft:#18302A;
+    --good:#6FD39B; --good-bg:#15301F; --warn:#F2B35C; --warn-bg:#33260F; --bad:#FF8A7E; --bad-bg:#3A1714;
+    --intl:#B9A4FF; --intl-bg:#272040;
+    --chip:#1E2723; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1412; --panel:#161D1A; --ink:#E7ECE9; --ink-2:#AEB8B3; --ink-3:#7F8A85;
+  --line:#26302C; --line-2:#34403B; --afc:#FF5A6E; --nfc:#7EA8FF; --accent:#5CC48E; --accent-soft:#18302A;
+  --good:#6FD39B; --good-bg:#15301F; --warn:#F2B35C; --warn-bg:#33260F; --bad:#FF8A7E; --bad-bg:#3A1714;
+  --intl:#B9A4FF; --intl-bg:#272040;
+  --chip:#1E2723; --shadow:none;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.45}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:28px 56px}
+.cond{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:16px}
+.eyebrow{font-family:"Barlow Condensed","Arial Narrow",sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:700;color:var(--accent)}
+h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:clamp(34px,6vw,52px);line-height:.95;margin:4px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--ink-2);margin:0;max-width:62ch}
+.asof{font-size:13px;color:var(--ink-3);text-align:right}
+.asof b{color:var(--ink);font-weight:600}
+
+/* page tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line-2);margin-bottom:20px;overflow-x:auto}
+.tabs button{border:0;background:transparent;color:var(--ink-3);font:700 17px/1 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:12px 14px 11px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:hover{color:var(--ink)}
+.tabs .tc{font:600 12px/1 "Barlow",sans-serif;letter-spacing:0;text-transform:none;color:var(--ink-3);margin-left:6px}
+
+.tally{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.tally div{background:var(--panel);padding:10px 14px}
+.tally .n{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.tally .l{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+@media (max-width:620px){.tally{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ground);padding-block:10px;border-bottom:1px solid var(--line);margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;color:var(--ink-2);font:600 13px/1 "Barlow",sans-serif;padding:8px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.seg button[data-conf="AFC"][aria-pressed="true"]{background:var(--afc);color:#fff}
+.seg button[data-conf="NFC"][aria-pressed="true"]{background:var(--nfc);color:#fff}
+select,input[type="search"]{font:500 14px/1 "Barlow",sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;min-height:36px}
+input[type="search"]{flex:1 1 220px;min-width:0}
+label.lbl{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.reset{border:1px solid var(--line-2);background:transparent;color:var(--ink-2);border-radius:8px;padding:8px 12px;font:600 13px/1 "Barlow",sans-serif;cursor:pointer}
+.count{font-size:13px;color:var(--ink-3);margin-left:auto}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.team{display:grid;grid-template-columns:64px minmax(0,1.25fr) minmax(0,1.1fr) minmax(0,1.5fr) 88px;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
+.rank{display:flex;flex-direction:column;align-items:center;gap:2px}
+.rank .num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.rank .seed{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.id{display:flex;gap:10px;align-items:center;min-width:0}
+.sw{width:10px;align-self:stretch;min-height:40px;border-radius:3px;border:1px solid var(--line-2);flex:none}
+.name{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:21px;line-height:1.05}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;font-size:12px;color:var(--ink-3)}
+.conf{font-weight:700;letter-spacing:.06em}
+.conf.AFC{color:var(--afc)} .conf.NFC{color:var(--nfc)}
+.rec{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums;padding:1px 7px;border-radius:5px;background:var(--chip)}
+.rec.w{background:var(--good-bg);color:var(--good)} .rec.l{background:var(--bad-bg);color:var(--bad)}
+.k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600;margin-bottom:3px}
+.qb .who{font-weight:600}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.pill.ok{background:var(--good-bg);color:var(--good)}
+.pill.hurt{background:var(--bad-bg);color:var(--bad)}
+.pill.new{background:var(--warn-bg);color:var(--warn)}
+.qb .note,.stars .note{font-size:13px;color:var(--ink-2);margin-top:2px}
+.stars ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.stars li{display:flex;gap:8px;align-items:baseline;min-width:0}
+.pos{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 5px;min-width:40px;text-align:center;flex:none}
+.stars .pn{font-weight:600}
+.stars .pd{font-size:13px;color:var(--ink-3)}
+.sb{text-align:center}
+.sb .n{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.sb .n.zero{color:var(--ink-3)}
+.rings{display:flex;justify-content:center;gap:2px;margin-top:4px;flex-wrap:wrap;max-width:70px;margin-inline:auto}
+.rings i{width:7px;height:7px;border-radius:50%;background:var(--warn);display:block}
+.blurb{grid-column:2 / -1;font-size:13.5px;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px;margin-top:-2px}
+.empty{padding:40px 16px;text-align:center;color:var(--ink-3);border:1px dashed var(--line-2);border-radius:10px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 10px}
+.sec-h h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:26px;margin:0;letter-spacing:.01em}
+.sec-h p{margin:0;font-size:13px;color:var(--ink-3)}
+.stand{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:28px}
+@media (max-width:860px){.stand{grid-template-columns:minmax(0,1fr)}}
+.cpanel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.chead{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);border-top:4px solid var(--cc)}
+.chead h3{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:22px;color:var(--cc);letter-spacing:.04em}
+.chead span{font-size:12px;color:var(--ink-3)}
+.seeds{padding:12px 14px;border-bottom:1px solid var(--line)}
+.seeds .k{margin-bottom:6px}
+.seedrow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.sd{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 2px;border-radius:6px;background:var(--chip);text-decoration:none;color:var(--ink)}
+.sd.lead{background:var(--accent-soft)}
+.sd .s{font-size:10px;color:var(--ink-3);font-weight:700;letter-spacing:.06em}
+.sd .ab{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:17px;line-height:1.1}
+.sd .wl{font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.sd:hover .ab{text-decoration:underline}
+.seedkey{display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--ink-3)}
+.seedkey i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.divs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line)}
+@media (max-width:420px){.divs{grid-template-columns:minmax(0,1fr)}}
+.dv{background:var(--panel);padding:10px 14px 12px}
+.dv table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dv caption{text-align:left;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding-bottom:4px}
+.dv th{font-size:10.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;text-align:right;padding:2px 0 4px}
+.dv th:first-child{text-align:left}
+.dv td{padding:4px 0;border-top:1px solid var(--line);text-align:right}
+.dv td:first-child{text-align:left}
+.dv a{color:var(--ink);text-decoration:none;font-weight:600}
+.dv a:hover{text-decoration:underline}
+.dv .sw2{display:inline-block;width:7px;height:14px;border-radius:2px;border:1px solid var(--line-2);vertical-align:-2px;margin-right:6px}
+.dv .tag{font-size:10px;font-weight:700;color:var(--accent);margin-left:5px}
+.dv .out{color:var(--ink-3)}
+.team{scroll-margin-top:130px}
+footer{margin-top:28px;font-size:12.5px;color:var(--ink-3);max-width:80ch}
+
+@media (max-width:860px){
+  .team{grid-template-columns:54px minmax(0,1fr) 64px;grid-template-areas:"r id sb" "r qb qb" "r st st" "r bl bl";row-gap:10px}
+  .rank{grid-area:r;align-self:start}
+  .id{grid-area:id} .qb{grid-area:qb} .stars{grid-area:st} .sb{grid-area:sb;align-self:start}
+  .blurb{grid-area:bl;grid-column:auto}
+  .rank .num{font-size:30px}
+}
+@media (prefers-reduced-motion:no-preference){.team,.gm{transition:border-color .15s}.team:hover,.gm:hover{border-color:var(--line-2)}}
+
+/* ---------- Schedule page ---------- */
+.phase{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) repeat(4,minmax(0,1fr));background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow)}
+.ph{padding:12px 14px;border-right:1px solid var(--line);position:relative;min-width:0}
+.ph:last-child{border-right:0}
+.ph .pk{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.ph .pn{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:18px;line-height:1.1;margin-top:3px}
+.ph .pd{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.ph.done .pn,.ph.done .pd{color:var(--ink-3)}
+.ph.now{background:var(--accent-soft)}
+.ph.now .pk{color:var(--accent)}
+.ticks{display:grid;grid-template-columns:repeat(18,minmax(0,1fr));gap:2px;margin-top:8px}
+.ticks i{height:8px;border-radius:2px;background:var(--line-2);display:block}
+.ticks i.f{background:var(--accent)}
+.ticks i.c{background:var(--panel);outline:2px solid var(--accent);outline-offset:-2px}
+.ticklab{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:4px;font-variant-numeric:tabular-nums}
+@media (max-width:860px){.phase{grid-template-columns:repeat(2,minmax(0,1fr))}.ph{border-bottom:1px solid var(--line)}.ph:nth-child(even){border-right:0}.ph.now,.ph.done{grid-column:1 / -1;border-right:0}}
+
+.weekbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;background:var(--ink);color:var(--panel);border-radius:10px 10px 0 0;padding:10px 12px}
+.weekbar h2{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:24px;letter-spacing:.02em;line-height:1}
+.weekbar h2 small{font:600 13px/1 "Barlow",sans-serif;opacity:.75;margin-left:8px;letter-spacing:0}
+.wnav{display:flex;align-items:center;gap:6px}
+.wnav button{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;font:700 18px/1 "Barlow",sans-serif;cursor:pointer}
+.wnav button:disabled{opacity:.3;cursor:default}
+.wnav select{background:transparent;color:inherit;border-color:rgba(255,255,255,.25)}
+.wnav select option{color:#131A17}
+.sfilters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-top:0;padding:10px 12px;border-radius:0 0 10px 10px;margin-bottom:16px}
+.tog{border:1px solid var(--line-2);background:transparent;color:var(--ink-2);border-radius:999px;padding:7px 12px;font:600 13px/1 "Barlow",sans-serif;cursor:pointer}
+.tog[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.tznote{font-size:12.5px;color:var(--ink-3);margin-left:auto}
+
+.dayh{display:flex;align-items:baseline;gap:10px;margin:18px 0 8px}
+.dayh h3{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:19px;letter-spacing:.04em;text-transform:uppercase}
+.dayh span{font-size:12.5px;color:var(--ink-3)}
+.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.games{grid-template-columns:minmax(0,1fr)}}
+.gm{display:grid;grid-template-columns:minmax(0,1fr) 118px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.gteams{padding:10px 12px 8px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.gt{display:grid;grid-template-columns:8px minmax(0,1fr) auto auto;gap:10px;align-items:center;text-decoration:none;color:var(--ink);padding:3px 0;min-width:0}
+.gt .sw3{width:8px;height:26px;border-radius:2px;border:1px solid var(--line-2)}
+.gt .gn{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:20px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt .gx{font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.gt .gx b{font-weight:600;color:var(--ink-2)}
+.gt .gs{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:24px;line-height:1;min-width:30px;text-align:right;font-variant-numeric:tabular-nums}
+.gt:hover .gn{text-decoration:underline}
+.gt.lose .gn,.gt.lose .gs{color:var(--ink-3)}
+.gt.win .gs::after{content:"◀";font-size:10px;color:var(--accent);margin-left:4px;vertical-align:4px}
+.gt .hm{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.gwhen{border-left:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center}
+.gwhen .tm{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:20px;line-height:1;font-variant-numeric:tabular-nums}
+.gwhen .tm small{font:600 11px/1 "Barlow",sans-serif;color:var(--ink-3);margin-left:2px}
+.gwhen .fin{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:800;font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.gwhen .dd{font-size:12px;color:var(--ink-3)}
+.tv{display:inline-block;font:700 11px/1 "Barlow",sans-serif;letter-spacing:.04em;padding:4px 7px;border-radius:5px;background:var(--chip);color:var(--ink-2);border:1px solid var(--line)}
+.gfoot{grid-column:1 / -1;border-top:1px solid var(--line);padding:8px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px;color:var(--ink-2)}
+.venue{display:flex;align-items:center;gap:6px;min-width:0;margin-right:auto}
+.venue svg{flex:none;width:12px;height:12px;fill:none;stroke:var(--ink-3);stroke-width:2}
+.venue span{min-width:0}
+.venue em{font-style:normal;color:var(--ink-3)}
+.gtag{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.gtag.prime{background:var(--warn-bg);color:var(--warn)}
+.gtag.intl{background:var(--intl-bg);color:var(--intl)}
+.gtag.div{background:var(--accent-soft);color:var(--accent)}
+.gtag.top{background:var(--chip);color:var(--ink-2)}
+.wp{width:100%;font-size:12px;color:var(--ink-3)}
+.wp b{color:var(--ink-2);font-weight:600}
+.byes{margin-top:18px;background:var(--panel);border:1px dashed var(--line-2);border-radius:10px;padding:10px 14px;font-size:13.5px;color:var(--ink-2)}
+.byes b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-right:8px}
+@media (max-width:480px){.gm{grid-template-columns:minmax(0,1fr) 96px}.gt .gn{font-size:18px}.gt .hm{display:none}.tabs button{font-size:15px;padding:11px 10px 10px}.tabs .tc{display:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">2026 season · after Week 4</div>
+      <h1>NFL Power Board</h1>
+      <p class="sub">All 32 teams ranked, with the starting quarterback, the players who drive each team, Super Bowl rings, and the weekly schedule.</p>
+    </div>
+    <div class="asof">Updated <b>Wed, Oct 7</b><br>Week 4 complete</div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Pages">
+    <button type="button" role="tab" id="tab-rank" aria-controls="pg-rank" aria-selected="true">Rankings &amp; standings</button>
+    <button type="button" role="tab" id="tab-sched" aria-controls="pg-sched" aria-selected="false">Schedule<span class="tc" id="tabweek"></span></button>
+  </nav>
+
+  <div id="pg-rank" role="tabpanel" aria-labelledby="tab-rank">
+  <section aria-labelledby="st-h">
+    <div class="sec-h"><h2 id="st-h">Standings</h2><p>If the season ended today · tap a team to jump to its card</p></div>
+    <div class="stand" id="stand"></div>
+  </section>
+
+  <div class="sec-h"><h2>Power Board</h2><p>Editorial 1–32 ranking</p></div>
+  <div class="tally" id="tally"></div>
+
+  <div class="controls" role="region" aria-label="Filters">
+    <div class="row">
+      <div class="seg" role="group" aria-label="Conference">
+        <button type="button" data-conf="ALL" aria-pressed="true">All</button>
+        <button type="button" data-conf="AFC" aria-pressed="false">AFC</button>
+        <button type="button" data-conf="NFC" aria-pressed="false">NFC</button>
+      </div>
+      <select id="div" aria-label="Division">
+        <option value="">All divisions</option>
+        <option>East</option><option>North</option><option>South</option><option>West</option>
+      </select>
+      <select id="rec" aria-label="Record">
+        <option value="">Any record</option>
+        <option value="unbeaten">Unbeaten</option>
+        <option value="even">Split / 1-1</option>
+        <option value="winless">Winless</option>
+      </select>
+      <select id="qbs" aria-label="Quarterback status">
+        <option value="">Any QB status</option>
+        <option value="ok">QB healthy</option>
+        <option value="hurt">QB hurt / backup starting</option>
+        <option value="new">New starter in 2026</option>
+      </select>
+    </div>
+    <div class="row">
+      <input type="search" id="q" placeholder="Search team, QB or player…" aria-label="Search">
+      <label class="lbl" for="sort">Sort</label>
+      <select id="sort">
+        <option value="rank">Power rank</option>
+        <option value="seed">Conference seed</option>
+        <option value="sb">Super Bowl titles</option>
+        <option value="name">Team A–Z</option>
+      </select>
+      <button type="button" class="reset" id="reset">Clear filters</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <footer>
+    Power rank is an editorial read after Week 4 that weighs record, recent results, strength of performance and current injuries. Conference seed is where each team would sit in its conference's playoff order today, per the league standings feed. Records through Monday night's Atlanta–New Orleans game; injury and roster news through Wednesday, Oct 7, 2026.
+  </footer>
+  </div>
+
+  <div id="pg-sched" role="tabpanel" aria-labelledby="tab-sched" hidden>
+    <div class="phase" id="phase" aria-label="Season phase"></div>
+
+    <div class="weekbar">
+      <h2 id="wk-title"></h2>
+      <div class="wnav">
+        <button type="button" id="wk-prev" aria-label="Previous week">‹</button>
+        <select id="wk-sel" aria-label="Choose week"></select>
+        <button type="button" id="wk-next" aria-label="Next week">›</button>
+      </div>
+    </div>
+    <div class="sfilters">
+      <select id="s-team" aria-label="Team"><option value="">All teams</option></select>
+      <button type="button" class="tog" id="s-div" aria-pressed="false">Division games</button>
+      <button type="button" class="tog" id="s-prime" aria-pressed="false">Prime time &amp; international</button>
+      <span class="tznote" id="s-count"></span>
+    </div>
+
+    <div id="sched"></div>
+
+    <footer>
+      Kickoff times are Central Time. TV listings are national broadcasts; Sunday afternoon games on CBS and FOX are regional, so your local station may show a different game, and CBS games also stream on Paramount+. Records and power ranks next to each team are current as of the last update. Tap a team to open its card on the Rankings page.
+    </footer>
+  </div>
+</div>
+
+<script>
+const T = [
+ // AFC East
+ {a:"BUF",n:"Buffalo Bills",c:"AFC",d:"East",w:3,l:1,seed:3,r:5,sb:0,col:"#00338D",
+  qb:"Josh Allen",qs:"ok",qn:"Hit Keon Coleman for a 34-yard go-ahead TD, then forced a deep ball into double coverage that was picked to end it.",
+  st:[["RB","James Cook","Engine of the run game"],["CB","Christian Benford","Missed his first game (toe); no timeline"]],
+  b:"First loss came 29-26 at home to the rival Patriots. The secondary and D-line are thinning out (Benford, Ed Oliver, Dee Alford). At the Rams on Monday night next."},
+ {a:"NE",n:"New England Patriots",c:"AFC",d:"East",w:2,l:2,seed:7,r:16,sb:6,col:"#002244",
+  qb:"Drake Maye",qs:"ok",qn:"269 yards, 3 TDs and 54 rushing yards in Buffalo; led the winning drive and quieted the benching talk.",
+  st:[["WR","Romeo Doubs","Two TDs at BUF"],["WR","A.J. Brown","On IR (ankle); team hopes for a Week 6 return"]],
+  b:"Bounced back from the Jacksonville rout by winning 29-26 in Orchard Park, sealed by a Craig Woodson INT. Hosts Las Vegas next."},
+ {a:"NYJ",n:"New York Jets",c:"AFC",d:"East",w:1,l:3,seed:12,r:28,sb:1,col:"#125740",
+  qb:"Geno Smith",qs:"new",qn:"Just 8 of 15 for 119 yards in Chicago; the offense barely had the ball.",
+  st:[["WR","Garrett Wilson","Held to 27 yards at CHI"],["RB","Breece Hall","Quad injury, week-to-week"]],
+  b:"Outgained 492-157 in a 23-12 loss to a Bears team without its starting QB. Three straight losses; Cleveland visits next."},
+ {a:"MIA",n:"Miami Dolphins",c:"AFC",d:"East",w:0,l:4,seed:13,r:32,sb:2,col:"#008E97",
+  qb:"Malik Willis",qs:"new",qn:"85 passing yards and a lost fumble in Minnesota; his hold on the job is shaky.",
+  st:[["RB","Ollie Gordon II","100 rushing yards and a TD at MIN"],["LB","Jacob Rodriguez","Rookie made 18 tackles"]],
+  b:"The defense kept it to five field goals, but a 15-10 loss in Minnesota means 0-4. Hosts Cincinnati next."},
+ // AFC North
+ {a:"BAL",n:"Baltimore Ravens",c:"AFC",d:"North",w:3,l:1,seed:5,r:8,sb:2,col:"#241773",
+  qb:"Lamar Jackson",qs:"hurt",qn:"MRI showed a sprained ankle, not a long-term injury, but he has only an outside chance to play Sunday. Tyler Huntley is next up.",
+  st:[["RB","Derrick Henry","Scored against his old team"],["S","Kyle Hamilton","Anchors a defense that held on late"]],
+  b:"Built a 24-7 halftime lead and held off Tennessee 24-18 with a patched-up line (rookie Vega Ioane at center). The good news: Lamar's ankle is a sprain. The worry: he may not make Sunday night in Atlanta."},
+ {a:"CIN",n:"Cincinnati Bengals",c:"AFC",d:"North",w:2,l:2,seed:11,r:19,sb:0,col:"#FB4F14",
+  qb:"Joe Burrow",qs:"ok",qn:"428 yards and two total TDs against Jacksonville, but two INTs.",
+  st:[["WR","Ja'Marr Chase","Still in concussion protocol; day-to-day"],["WR","Tee Higgins","11 catches, 157 yards; adductor strain, day-to-day"]],
+  b:"Lost 22-17 at home to Jacksonville when a fourth-and-10 run came up a yard short. Two straight losses, and both top receivers are banged up heading to Miami."},
+ {a:"CLE",n:"Cleveland Browns",c:"AFC",d:"North",w:3,l:1,seed:4,r:12,sb:0,col:"#311D00",
+  qb:"Deshaun Watson",qs:"ok",qn:"268 yards and a TD vs. Pittsburgh; his steadiest game of the year.",
+  st:[["K","Andre Szmyt","Walk-off 56-yard field goal Thursday"],["CB","Denzel Ward","INT vs. PIT; defense sacked Rodgers 5 times"]],
+  b:"Three straight wins and atop the AFC North on tiebreaks after beating the Steelers 27-24 on Thursday night. At the Jets next."},
+ {a:"PIT",n:"Pittsburgh Steelers",c:"AFC",d:"North",w:2,l:2,seed:9,r:17,sb:6,col:"#FFB612",
+  qb:"Aaron Rodgers",qs:"ok",qn:"299 yards and 3 TDs in Cleveland, but 2 INTs and 5 sacks.",
+  st:[["EDGE","T.J. Watt","Sack, forced fumble and recovery at CLE"],["WR","DK Metcalf","115 receiving yards"]],
+  b:"Tied it late, then lost 27-24 on a last-second field goal. DL Derrick Harmon (foot) could miss weeks, and Rico Dowdle sat again. Hosts Indianapolis next."},
+ // AFC South
+ {a:"JAX",n:"Jacksonville Jaguars",c:"AFC",d:"South",w:3,l:1,seed:2,r:6,sb:0,col:"#006778",
+  qb:"Trevor Lawrence",qs:"ok",qn:"Efficient 18 of 23 with a TD and no turnovers in Cincinnati.",
+  st:[["WR","Brian Thomas Jr.","Caught Lawrence's TD vs. CIN"],["LB","Foyesade Oluokun","One of two INTs of Burrow"]],
+  b:"Two straight wins after a 22-17 stand in Cincinnati, sealed by a fourth-down stop. Safeties Caleb Ransaw and Eric Murray got hurt. Philadelphia in London next."},
+ {a:"IND",n:"Indianapolis Colts",c:"AFC",d:"South",w:2,l:2,seed:10,r:18,sb:2,col:"#002C5F",
+  qb:"Daniel Jones",qs:"ok",qn:"Only 143 passing yards with an INT and a fumble, but ran in a fourth-quarter TD.",
+  st:[["RB","Jonathan Taylor","2 TDs in London; NFL record for international-game TDs"],["CB","Sauce Gardner","Part of a defense that smothered WAS"]],
+  b:"Beat a depleted Washington 30-13 in London for a second straight win. At Pittsburgh next."},
+ {a:"TEN",n:"Tennessee Titans",c:"AFC",d:"South",w:0,l:4,seed:15,r:31,sb:0,col:"#4B92DB",
+  qb:"Cam Ward",qs:"ok",qn:"222 yards, a TD and an INT in Baltimore; a tense postgame presser drew attention.",
+  st:[["DT","Jeffery Simmons","Still the defense's best player"],["WR","Carnell Tate","Rookie lost a costly fumble at BAL"]],
+  b:"Fell behind 24-7 by halftime on turnovers and a red-zone stall, then lost 24-18. Hosts winless Houston next."},
+ {a:"HOU",n:"Houston Texans",c:"AFC",d:"South",w:0,l:4,seed:16,r:26,sb:0,col:"#03202F",
+  qb:"C.J. Stroud",qs:"ok",qn:"347 yards, 2 TDs and no picks vs. Dallas, his best game of the year.",
+  st:[["WR","Nico Collins","Back from his hamstring: 118 yards, 2 TDs"],["EDGE","Will Anderson Jr.","Pass-rush centerpiece"]],
+  b:"Led 16-6 at the half but lost 34-30 on a Cowboys TD with 40 seconds left; 13 penalties hurt. 0-4 heading to Tennessee."},
+ // AFC West
+ {a:"LV",n:"Las Vegas Raiders",c:"AFC",d:"West",w:3,l:1,seed:6,r:10,sb:3,col:"#A5ACAF",
+  qb:"Kirk Cousins",qs:"new",qn:"365 yards, 2 TDs, no INTs on 52 attempts vs. KC.",
+  st:[["TE","Brock Bowers","86 yards and a TD vs. KC"],["RB","Ashton Jeanty","126 scrimmage yards"]],
+  b:"Led in the fourth before two quick Chiefs TDs, one set up by a kick-return fumble, flipped it to a 30-27 loss. At New England next."},
+ {a:"KC",n:"Kansas City Chiefs",c:"AFC",d:"West",w:4,l:0,seed:1,r:2,sb:4,col:"#E31837",
+  qb:"Patrick Mahomes",qs:"ok",qn:"Modest 225 yards and 2 TDs, but now 7-0 in Las Vegas.",
+  st:[["RB","Kenneth Walker III","Career-high 177 yards and 2 TDs at LV"],["DT","Chris Jones","Interior wrecker"]],
+  b:"4-0 after winning the AFC West showdown 30-27, but the receiver room took hits: Tyquan Thornton needs ankle surgery (3-4 months) and Rashee Rice's hamstring is minor. KC is reportedly weighing a Tyreek Hill reunion over the bye."},
+ {a:"DEN",n:"Denver Broncos",c:"AFC",d:"West",w:2,l:2,seed:8,r:11,sb:3,col:"#FB4F14",
+  qb:"Bo Nix",qs:"ok",qn:"214 yards and a TD at SF; no comeback this time.",
+  st:[["CB","Patrick Surtain II","Ankle sprain; week-to-week, ruled out for Week 5"],["S","Talanoa Hufanga","Ball-hawking safety"]],
+  b:"Lost 24-14 in San Francisco and managed just 82 rushing yards. Facing the Chargers without Surtain, who is week-to-week with an ankle sprain."},
+ {a:"LAC",n:"Los Angeles Chargers",c:"AFC",d:"West",w:0,l:4,seed:14,r:29,sb:0,col:"#0080C6",
+  qb:"Justin Herbert",qs:"ok",qn:"Two first-half INTs, then sharp after the break; sacked 4 times and lost a late strip-sack.",
+  st:[["S","Derwin James","Missed Week 4 (hamstring)"],["WR","Ladd McConkey","Foot injury; sat the second half"]],
+  b:"Rallied from 30-13 down in Seattle before losing 30-23. LT Rashawn Slater (high ankle) is out for Week 5, so the line is still patched up. Hosts Denver."},
+ // NFC East
+ {a:"PHI",n:"Philadelphia Eagles",c:"NFC",d:"East",w:2,l:2,seed:11,r:15,sb:2,col:"#004C54",
+  qb:"Jalen Hurts",qs:"ok",qn:"Just 93 passing yards (2 TDs) vs. the Rams; the offense went 0-for-12 on third down.",
+  st:[["RB","Saquon Barkley","Hamstring; week-to-week, not long-term"],["RT","Lane Johnson","Retired Tuesday after 14 seasons"]],
+  b:"Blew a 20-10 fourth-quarter lead to the Rams, 24-20, for a second straight loss. Then Lane Johnson retired on Tuesday, and Barkley is week-to-week with Tank Bigsby headed to IR. Jacksonville in London next."},
+ {a:"NYG",n:"New York Giants",c:"NFC",d:"East",w:3,l:1,seed:3,r:13,sb:4,col:"#0B2265",
+  qb:"Jameis Winston",qs:"new",qn:"250 yards, 3 TDs, 2 INTs vs. Arizona; holding off newly acquired J.J. McCarthy.",
+  st:[["WR","Malik Nabers","Big-play No. 1 receiver"],["CB","Deonte Banks","98-yard pick-six sealed the win"]],
+  b:"Two straight wins and first in the NFC East after a 36-24 win over Arizona. At Washington next."},
+ {a:"WAS",n:"Washington Commanders",c:"NFC",d:"East",w:1,l:3,seed:13,r:25,sb:3,col:"#5A1414",
+  qb:"Jayden Daniels",qs:"hurt",qn:"Dislocated elbow, but the plan is a full week of practice and a start vs. the Giants in a protective brace. Marcus Mariota (MCL) has no timetable.",
+  st:[["WR","Terry McLaurin","Missed Week 4 (hamstring)"],["RB","Austin Ekeler","Signed for backfield depth"]],
+  b:"Down to the third-string QB, Washington lost 30-13 to the Colts with 10 penalties. Returner Jaylin Lane (ankle) is done for the year. Hosts the Giants with Daniels expected back."},
+ {a:"DAL",n:"Dallas Cowboys",c:"NFC",d:"East",w:2,l:2,seed:12,r:20,sb:5,col:"#041E42",
+  qb:"Dak Prescott",qs:"ok",qn:"335 yards; threw the winning TD with 40 seconds left in Houston.",
+  st:[["WR","CeeDee Lamb","17 catches, 189 yards, game-winning TD"],["RB","Javonte Williams","3 rushing TDs at HOU"]],
+  b:"Came back from 16-6 down to win 34-30 in Houston. The secondary is in tatters. Hosts Tampa Bay on Thursday."},
+ // NFC North
+ {a:"MIN",n:"Minnesota Vikings",c:"NFC",d:"North",w:4,l:0,seed:1,r:3,sb:0,col:"#4F2683",
+  qb:"Kyler Murray",qs:"new",qn:"Clean 27 of 37, 247 yards, no turnovers vs. Miami.",
+  st:[["TE","T.J. Hockenson","13 catches, 119 yards"],["WR","Justin Jefferson","Missed Week 4 (ankle); Week 5 uncertain"]],
+  b:"4-0 after grinding out a 15-10 win on five Will Reichard field goals. Lost LT Christian Darrisaw (concussion check) and OL Donovan Jackson (knee) in-game. At New Orleans next."},
+ {a:"DET",n:"Detroit Lions",c:"NFC",d:"North",w:2,l:2,seed:9,r:14,sb:0,col:"#0076B6",
+  qb:"Jared Goff",qs:"ok",qn:"412 yards in Carolina, but the drive to win it died a yard short.",
+  st:[["RB","Jahmyr Gibbs","Held to 46 rushing yards and a TD"],["EDGE","Aidan Hutchinson","Defense allowed 445 yards"]],
+  b:"Upset 32-26 on Sunday night in Carolina, where the defense had no answer for Tetairoa McMillan. At Arizona next."},
+ {a:"CHI",n:"Chicago Bears",c:"NFC",d:"North",w:3,l:1,seed:5,r:7,sb:1,col:"#0B162A",
+  qb:"Caleb Williams",qs:"hurt",qn:"Hamstring; ruled out for Week 5 and week-to-week. Tyson Bagent starts again at Green Bay.",
+  st:[["RB","Kyle Monangai","146 yards, 2 TDs vs. NYJ; thumb, day-to-day"],["WR","Rome Odunze","Top receiver"]],
+  b:"Three straight wins: 492 yards, no punts and a 23-12 win over the Jets. At Green Bay next."},
+ {a:"GB",n:"Green Bay Packers",c:"NFC",d:"North",w:2,l:2,seed:10,r:22,sb:4,col:"#203731",
+  qb:"Jordan Love",qs:"ok",qn:"Only 197 yards but 2 TDs in Tampa.",
+  st:[["EDGE","Micah Parsons","PUP-eligible in Week 5, but may not play until November"],["LB","Edgerrin Cooper","Achilles; expected to miss the season"]],
+  b:"Two INTs of a rookie QB powered a 17-14 win in Tampa, but losing Cooper hurts. Hosts Chicago next."},
+ // NFC South
+ {a:"NO",n:"New Orleans Saints",c:"NFC",d:"South",w:1,l:3,seed:14,r:24,sb:1,col:"#D3BC8D",
+  qb:"Tyler Shough",qs:"ok",qn:"Pressured on nearly half his dropbacks in the Monday night loss; ball security and protection are the issues.",
+  st:[["WR","Chris Olave","Top target"],["DE","Cam Jordan","37, in his announced final season"]],
+  b:"Run over 45-24 by Atlanta on Monday night, with LB Kaden Elliss and pass rushers Carl Granderson and Anfernee Jennings out and Travis Etienne Jr. on IR. Unbeaten Minnesota visits next."},
+ {a:"CAR",n:"Carolina Panthers",c:"NFC",d:"South",w:2,l:2,seed:4,r:21,sb:0,col:"#0085CA",
+  qb:"Bryce Young",qs:"ok",qn:"329 yards, 2 TDs, no INTs vs. Detroit; opened 11 for 11.",
+  st:[["WR","Tetairoa McMillan","14 catches, 192 yards, 2 TDs on SNF"],["CB","Jaycee Horn","Missed Week 4 (quad)"]],
+  b:"Stunned Detroit 32-26 on Sunday night and keeps the NFC South lead over 2-2 Atlanta thanks to the Week 2 head-to-head win. Bye next, and OT Monroe Freeling (knee) gets time to heal."},
+ {a:"ATL",n:"Atlanta Falcons",c:"NFC",d:"South",w:2,l:2,seed:8,r:23,sb:0,col:"#A71930",
+  qb:"Michael Penix Jr.",qs:"new",qn:"Efficient 15 of 20, 233 yards and a TD at New Orleans, pressured on only 3 dropbacks.",
+  st:[["RB","Bijan Robinson","145 yards, 2 TDs incl. a 59-yarder on MNF"],["WR","Drake London","Top receiver"]],
+  b:"Ran over New Orleans 45-24 on Monday night; Bijan and Brian Robinson combined for five TDs. LT Jake Matthews (groin) and edge Za'Darius Smith (concussion) are hurting. Baltimore, maybe without Lamar, visits Sunday night."},
+ {a:"TB",n:"Tampa Bay Buccaneers",c:"NFC",d:"South",w:0,l:4,seed:16,r:30,sb:2,col:"#D50A0A",
+  qb:"Baker Mayfield",qs:"hurt",qn:"Dislocated thumb, likely 3-6 weeks; rookie Jalon Daniels threw 2 INTs in his first start.",
+  st:[["WR","Emeka Egbuka","Second-year No. 1 receiver"],["S","Antoine Winfield Jr.","Rib fracture; out for Week 5"]],
+  b:"0-4 after a 17-14 loss to Green Bay ended on a fourth-down sack. A short week at Dallas on Thursday."},
+ // NFC West
+ {a:"SF",n:"San Francisco 49ers",c:"NFC",d:"West",w:4,l:0,seed:2,r:1,sb:5,col:"#AA0000",
+  qb:"Brock Purdy",qs:"ok",qn:"Quiet first half, then 2 TDs after the break, including a 56-yard screen to George Kittle.",
+  st:[["TE","George Kittle","56-yard TD put DEN away"],["WR","Mike Evans","Played through rib injury: 76 yards"]],
+  b:"4-0 after a 24-14 win over Denver despite missing Nick Bosa (calf). FB Kyle Juszczyk (knee) is out several weeks. Showdown in Seattle next."},
+ {a:"SEA",n:"Seattle Seahawks",c:"NFC",d:"West",w:3,l:1,seed:6,r:4,sb:2,col:"#002244",
+  qb:"Sam Darnold",qs:"ok",qn:"Efficient 168 yards and 2 TDs in a sloppy game.",
+  st:[["WR","Jaxon Smith-Njigba","Top target"],["EDGE","Uchenna Nwosu","Game-sealing strip-sack of Herbert"]],
+  b:"Forced three early turnovers and held on 30-23 vs. the Chargers. Rookie RB Jadarian Price went to IR (chest). Unbeaten San Francisco visits next."},
+ {a:"ARI",n:"Arizona Cardinals",c:"NFC",d:"West",w:1,l:3,seed:15,r:27,sb:0,col:"#97233F",
+  qb:"Jacoby Brissett",qs:"new",qn:"3 INTs at the Giants, including a 98-yard pick-six.",
+  st:[["TE","Trey McBride","Volume target"],["LT","Paris Johnson Jr.","Biceps injury; left in a sling"]],
+  b:"Third straight loss, 36-24 in New York, and the injuries piled up (Johnson, Isaiah Adams, Andrew Wingard). Hosts Detroit."},
+ {a:"LAR",n:"Los Angeles Rams",c:"NFC",d:"West",w:2,l:2,seed:7,r:9,sb:2,col:"#003594",
+  qb:"Matthew Stafford",qs:"ok",qn:"317 yards but 2 INTs; led the late comeback drive in Philadelphia.",
+  st:[["WR","Puka Nacua","Back from hip: 125 yards plus a rushing TD"],["RB","Kyren Williams","Go-ahead TD late; 147 scrimmage yards"]],
+  b:"Rallied from 20-10 down to win 24-20 in Philadelphia, sealed by a Byron Young strip-sack. Hosts Buffalo on Monday night next."}
+];
+
+const DR = {BUF:1,NE:2,NYJ:3,MIA:4,CLE:1,BAL:2,PIT:3,CIN:4,JAX:1,IND:2,TEN:3,HOU:4,KC:1,LV:2,DEN:3,LAC:4,
+  NYG:1,PHI:2,DAL:3,WAS:4,MIN:1,CHI:2,DET:3,GB:4,CAR:1,ATL:2,NO:3,TB:4,SF:1,SEA:2,LAR:3,ARI:4};
+T.forEach(t => t.dr = DR[t.a]);
+
+/* ---------- Schedule data ----------
+   Times are Central Time. s: "final" | "live" | "upcoming".
+   as/hs = away/home score (finals). hp = home team's pre-game win probability (%), when available.
+   slot: "TNF" | "SNF" | "MNF" | "" ; intl: international game. */
+const SEASON = {
+  year:2026, current:5, total:18,
+  phases:[
+    {k:"Done", n:"Preseason", d:"August", st:"done"},
+    {k:"Now", n:"Regular season", d:"Sep 9 – Jan 10", st:"now"},
+    {k:"Playoffs", n:"Wild Card", d:"Jan 16–18", st:""},
+    {k:"Playoffs", n:"Divisional", d:"Jan 23–24", st:""},
+    {k:"Playoffs", n:"Conference Champ.", d:"Jan 31", st:""},
+    {k:"Final", n:"Super Bowl LXI", d:"Feb 14 · SoFi Stadium", st:""}
+  ]
+};
+const WEEKS = [
+ {wk:4, dates:"Oct 1–5", byes:[], games:[
+  {day:"Thu, Oct 1", t:"7:15 PM", a:"PIT", h:"CLE", s:"final", as:24, hs:27, v:"Huntington Bank Field", loc:"Cleveland, OH", tv:"Prime Video", slot:"TNF"},
+  {day:"Sun, Oct 4", t:"8:30 AM", a:"IND", h:"WAS", s:"final", as:30, hs:13, v:"Tottenham Hotspur Stadium", loc:"London, England", tv:"", intl:true},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"ARI", h:"NYG", s:"final", as:24, hs:36, v:"MetLife Stadium", loc:"East Rutherford, NJ", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"NE", h:"BUF", s:"final", as:29, hs:26, v:"Highmark Stadium", loc:"Orchard Park, NY", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"NYJ", h:"CHI", s:"final", as:12, hs:23, v:"Soldier Field", loc:"Chicago, IL", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"DAL", h:"HOU", s:"final", as:34, hs:30, v:"NRG Stadium", loc:"Houston, TX", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"LAR", h:"PHI", s:"final", as:24, hs:20, v:"Lincoln Financial Field", loc:"Philadelphia, PA", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"GB", h:"TB", s:"final", as:17, hs:14, v:"Raymond James Stadium", loc:"Tampa, FL", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"TEN", h:"BAL", s:"final", as:18, hs:24, v:"M&T Bank Stadium", loc:"Baltimore, MD", tv:""},
+  {day:"Sun, Oct 4", t:"12:00 PM", a:"JAX", h:"CIN", s:"final", as:22, hs:17, v:"Paycor Stadium", loc:"Cincinnati, OH", tv:""},
+  {day:"Sun, Oct 4", t:"3:05 PM", a:"MIA", h:"MIN", s:"final", as:10, hs:15, v:"U.S. Bank Stadium", loc:"Minneapolis, MN", tv:""},
+  {day:"Sun, Oct 4", t:"3:25 PM", a:"KC", h:"LV", s:"final", as:30, hs:27, v:"Allegiant Stadium", loc:"Las Vegas, NV", tv:""},
+  {day:"Sun, Oct 4", t:"3:25 PM", a:"LAC", h:"SEA", s:"final", as:23, hs:30, v:"Lumen Field", loc:"Seattle, WA", tv:""},
+  {day:"Sun, Oct 4", t:"3:25 PM", a:"DEN", h:"SF", s:"final", as:14, hs:24, v:"Levi's Stadium", loc:"Santa Clara, CA", tv:""},
+  {day:"Sun, Oct 4", t:"7:20 PM", a:"DET", h:"CAR", s:"final", as:26, hs:32, v:"Bank of America Stadium", loc:"Charlotte, NC", tv:"NBC", slot:"SNF"},
+  {day:"Mon, Oct 5", t:"7:15 PM", a:"ATL", h:"NO", s:"final", as:45, hs:24, v:"Caesars Superdome", loc:"New Orleans, LA", tv:"ESPN", slot:"MNF"}
+ ]},
+ {wk:5, dates:"Oct 8–12", byes:["CAR","KC"], games:[
+  {day:"Thu, Oct 8", t:"7:15 PM", a:"TB", h:"DAL", s:"upcoming", v:"AT&T Stadium", loc:"Arlington, TX", tv:"Prime Video", slot:"TNF", hp:79.8},
+  {day:"Sun, Oct 11", t:"8:30 AM", a:"PHI", h:"JAX", s:"upcoming", v:"Tottenham Hotspur Stadium", loc:"London, England", tv:"NFL Network / ESPN+", intl:true, hp:76.9},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"NYG", h:"WAS", s:"upcoming", v:"Northwest Stadium", loc:"Landover, MD", tv:"FOX", hp:62.9},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"CLE", h:"NYJ", s:"upcoming", v:"MetLife Stadium", loc:"East Rutherford, NJ", tv:"CBS", hp:55},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"IND", h:"PIT", s:"upcoming", v:"Acrisure Stadium", loc:"Pittsburgh, PA", tv:"CBS", hp:56.4},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"HOU", h:"TEN", s:"upcoming", v:"Nissan Stadium", loc:"Nashville, TN", tv:"CBS", hp:22.4},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"MIN", h:"NO", s:"upcoming", v:"Caesars Superdome", loc:"New Orleans, LA", tv:"FOX", hp:45.5},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"LV", h:"NE", s:"upcoming", v:"Gillette Stadium", loc:"Foxborough, MA", tv:"CBS", hp:64.3},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"CIN", h:"MIA", s:"upcoming", v:"Hard Rock Stadium", loc:"Miami Gardens, FL", tv:"FOX", hp:23.8},
+  {day:"Sun, Oct 11", t:"12:00 PM", a:"CHI", h:"GB", s:"upcoming", v:"Lambeau Field", loc:"Green Bay, WI", tv:"FOX", hp:42.1},
+  {day:"Sun, Oct 11", t:"3:05 PM", a:"DEN", h:"LAC", s:"upcoming", v:"SoFi Stadium", loc:"Inglewood, CA", tv:"CBS"},
+  {day:"Sun, Oct 11", t:"3:25 PM", a:"DET", h:"ARI", s:"upcoming", v:"State Farm Stadium", loc:"Glendale, AZ", tv:"FOX"},
+  {day:"Sun, Oct 11", t:"3:25 PM", a:"SF", h:"SEA", s:"upcoming", v:"Lumen Field", loc:"Seattle, WA", tv:"FOX"},
+  {day:"Sun, Oct 11", t:"7:20 PM", a:"BAL", h:"ATL", s:"upcoming", v:"Mercedes-Benz Stadium", loc:"Atlanta, GA", tv:"NBC", slot:"SNF"},
+  {day:"Mon, Oct 12", t:"7:15 PM", a:"BUF", h:"LAR", s:"upcoming", v:"SoFi Stadium", loc:"Inglewood, CA", tv:"ABC", slot:"MNF"}
+ ]}
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TM = Object.fromEntries(T.map(t => [t.a, t]));
+const nick = t => t.n.split(" ").slice(-1)[0];
+function pct(t){ const g=t.w+t.l; return g ? (t.w/g).toFixed(3).replace(/^0/,"") : ".000"; }
+
+function renderStandings(){
+  const out = ["AFC","NFC"].map(c => {
+    const conf = T.filter(t=>t.c===c);
+    const seeds = conf.filter(t=>t.seed<=7).sort((a,b)=>a.seed-b.seed);
+    const seedHtml = seeds.map(t=>`<a class="sd ${t.seed<=4?"lead":""}" href="#t-${t.a}"><span class="s">#${t.seed}</span><span class="ab">${t.a}</span><span class="wl">${t.w}-${t.l}</span></a>`).join("");
+    const divs = ["East","North","South","West"].map(d => {
+      const rows = conf.filter(t=>t.d===d).sort((a,b)=>a.dr-b.dr).map(t=>{
+        const tag = t.seed<=4 ? "DIV" : t.seed<=7 ? "WC" : "";
+        return `<tr><td><span class="sw2" style="background:${t.col}"></span><a href="#t-${t.a}">${esc(nick(t))}</a>${tag?`<span class="tag">${tag}</span>`:""}</td><td>${t.w}</td><td>${t.l}</td><td class="${t.seed>7?"out":""}">${pct(t)}</td></tr>`;
+      }).join("");
+      return `<div class="dv"><table><caption>${c} ${d}</caption><thead><tr><th scope="col">Team</th><th scope="col">W</th><th scope="col">L</th><th scope="col">Pct</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }).join("");
+    const lead = seeds[0];
+    return `<div class="cpanel" style="--cc:var(--${c.toLowerCase()})">
+      <div class="chead"><h3>${c}</h3><span>Top seed: ${esc(lead.n)} (${lead.w}-${lead.l})</span></div>
+      <div class="seeds"><div class="k">Playoff picture</div><div class="seedrow">${seedHtml}</div>
+        <div class="seedkey"><span><i style="background:var(--accent-soft);border:1px solid var(--line-2)"></i>Division leader</span><span><i style="background:var(--chip);border:1px solid var(--line-2)"></i>Wild card</span></div></div>
+      <div class="divs">${divs}</div>
+    </div>`;
+  }).join("");
+  $("#stand").innerHTML = out;
+}
+
+/* ---------- Power board ---------- */
+const state = {conf:"ALL", div:"", rec:"", qbs:"", q:"", sort:"rank"};
+const QBL = {ok:"Healthy", hurt:"Injured", new:"New starter"};
+function recClass(t){ return t.l===0 ? "w" : t.w===0 ? "l" : ""; }
+function match(t){
+  if(state.conf!=="ALL" && t.c!==state.conf) return false;
+  if(state.div && t.d!==state.div) return false;
+  if(state.rec==="unbeaten" && t.l!==0) return false;
+  if(state.rec==="winless" && t.w!==0) return false;
+  if(state.rec==="even" && !(t.w>0 && t.l>0)) return false;
+  if(state.qbs && t.qs!==state.qbs) return false;
+  if(state.q){
+    const hay = (t.n+" "+t.a+" "+t.qb+" "+t.st.map(s=>s[1]).join(" ")).toLowerCase();
+    if(!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+function sorter(a,b){
+  if(state.sort==="seed") return a.c===b.c ? a.seed-b.seed : (a.c<b.c?-1:1);
+  if(state.sort==="sb") return b.sb-a.sb || a.r-b.r;
+  if(state.sort==="name") return a.n.localeCompare(b.n);
+  return a.r-b.r;
+}
+function row(t){
+  const rings = t.sb ? '<div class="rings" aria-hidden="true">'+"<i></i>".repeat(t.sb)+"</div>" : "";
+  return `<article class="team" id="t-${t.a}">
+    <div class="rank"><span class="num">${t.r}</span><span class="seed">${t.c} #${t.seed}</span></div>
+    <div class="id"><span class="sw" style="background:${t.col}"></span><div>
+      <div class="name">${esc(t.n)}</div>
+      <div class="meta"><span class="conf ${t.c}">${t.c}</span><span>${t.d}</span><span class="rec ${recClass(t)}">${t.w}-${t.l}</span></div>
+    </div></div>
+    <div class="qb"><div class="k">Quarterback</div><div><span class="who">${esc(t.qb)}</span><span class="pill ${t.qs}">${QBL[t.qs]}</span></div><div class="note">${esc(t.qn)}</div></div>
+    <div class="stars"><div class="k">Players to watch</div><ul>${t.st.map(s=>`<li><span class="pos">${esc(s[0])}</span><span><span class="pn">${esc(s[1])}</span> <span class="pd">· ${esc(s[2])}</span></span></li>`).join("")}</ul></div>
+    <div class="sb"><div class="k">Super Bowls</div><div class="n ${t.sb?"":"zero"}">${t.sb}</div>${rings}</div>
+    <div class="blurb">${esc(t.b)}</div>
+  </article>`;
+}
+function render(){
+  const rows = T.filter(match).sort(sorter);
+  $("#list").innerHTML = rows.length ? rows.map(row).join("") : '<div class="empty">No teams match these filters. Clear a filter to see more.</div>';
+  $("#count").textContent = rows.length + (rows.length===1?" team":" teams");
+  const scope = T.filter(t => (state.conf==="ALL"||t.c===state.conf));
+  const tally = [
+    [scope.filter(t=>t.l===0).length,"Unbeaten"],
+    [scope.filter(t=>t.w===0).length,"Winless"],
+    [scope.filter(t=>t.qs==="hurt").length,"Starting QBs hurt"],
+    [scope.reduce((s,t)=>s+t.sb,0),"Super Bowl titles"]
+  ];
+  $("#tally").innerHTML = tally.map(([n,l])=>`<div><div class="n">${n}</div><div class="l">${l}${state.conf!=="ALL"?" · "+state.conf:""}</div></div>`).join("");
+}
+document.querySelectorAll(".seg button").forEach(b=>b.addEventListener("click",()=>{
+  state.conf=b.dataset.conf;
+  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+  render();
+}));
+[["div","div"],["rec","rec"],["qbs","qbs"],["sort","sort"]].forEach(([id,k])=>$("#"+id).addEventListener("change",e=>{state[k]=e.target.value;render();}));
+$("#q").addEventListener("input",e=>{state.q=e.target.value.trim();render();});
+$("#reset").addEventListener("click",()=>{
+  Object.assign(state,{conf:"ALL",div:"",rec:"",qbs:"",q:"",sort:"rank"});
+  ["div","rec","qbs"].forEach(id=>$("#"+id).value=""); $("#sort").value="rank"; $("#q").value="";
+  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed", String(x.dataset.conf==="ALL")));
+  render();
+});
+
+/* ---------- Schedule ---------- */
+const sstate = {idx: Math.max(0, WEEKS.findIndex(w=>w.wk===SEASON.current)), team:"", div:false, prime:false};
+const PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+
+function renderPhase(){
+  const done = SEASON.current - 1;
+  $("#phase").innerHTML = SEASON.phases.map(p=>{
+    let extra = "";
+    if(p.st==="now"){
+      const ticks = Array.from({length:SEASON.total},(_,i)=>`<i class="${i<done?"f":i===done?"c":""}"></i>`).join("");
+      extra = `<div class="ticks" aria-hidden="true">${ticks}</div><div class="ticklab"><span>Wk 1</span><span>Week ${SEASON.current} of ${SEASON.total}</span><span>Wk ${SEASON.total}</span></div>`;
+    }
+    return `<div class="ph ${p.st}"><div class="pk">${p.st==="now"?"Now playing":esc(p.k)}</div><div class="pn">${esc(p.n)}</div><div class="pd">${esc(p.d)}</div>${extra}</div>`;
+  }).join("");
+}
+function isDiv(g){ const a=TM[g.a], h=TM[g.h]; return a && h && a.c===h.c && a.d===h.d; }
+function teamRow(code, score, cls, isHome){
+  const t = TM[code];
+  return `<a class="gt ${cls}" href="#t-${code}" aria-label="${esc(t.n)}, ${t.w}-${t.l}, power rank ${t.r}">
+    <span class="sw3" style="background:${t.col}"></span>
+    <span class="gn">${esc(nick(t))}${isHome?' <span class="hm">home</span>':''}</span>
+    <span class="gx"><b>${t.w}-${t.l}</b> · #${t.r}</span>
+    <span class="gs">${score==null?"":score}</span>
+  </a>`;
+}
+function gameCard(g){
+  const fin = g.s==="final";
+  const aw = fin ? (g.as>g.hs?"win":g.as<g.hs?"lose":"") : "";
+  const hw = fin ? (g.hs>g.as?"win":g.hs<g.as?"lose":"") : "";
+  const tags = [];
+  if(g.slot) tags.push(`<span class="gtag prime">${g.slot}</span>`);
+  if(g.intl) tags.push(`<span class="gtag intl">International</span>`);
+  if(isDiv(g)) tags.push(`<span class="gtag div">Division</span>`);
+  const A=TM[g.a], H=TM[g.h];
+  if(A.r<=8 && H.r<=8) tags.push(`<span class="gtag top">Top-8 clash</span>`);
+  let wp = "";
+  if(!fin && g.hp!=null){
+    const fav = g.hp>=50 ? H : A, p = Math.round(g.hp>=50 ? g.hp : 100-g.hp);
+    wp = `<div class="wp">Pre-game win probability: <b>${esc(nick(fav))} ${p}%</b></div>`;
+  }
+  const when = fin
+    ? `<span class="fin">Final</span><span class="dd">${esc(g.day)}</span>${g.tv?`<span class="tv">${esc(g.tv)}</span>`:""}`
+    : g.s==="live"
+      ? `<span class="fin" style="color:var(--bad)">Live</span>${g.tv?`<span class="tv">${esc(g.tv)}</span>`:""}`
+      : `<span class="tm">${esc(g.t.replace(/ (AM|PM)/,""))}<small>${g.t.slice(-2)} CT</small></span>${g.tv?`<span class="tv">${esc(g.tv)}</span>`:""}`;
+  return `<article class="gm">
+    <div class="gteams">${teamRow(g.a, fin?g.as:null, aw, false)}${teamRow(g.h, fin?g.hs:null, hw, true)}</div>
+    <div class="gwhen">${when}</div>
+    <div class="gfoot"><span class="venue">${PIN}<span>${esc(g.v)} <em>· ${esc(g.loc)}</em></span></span>${tags.join("")}${wp}</div>
+  </article>`;
+}
+function renderSchedule(){
+  const W = WEEKS[sstate.idx];
+  const statusOf = w => w.games.every(g=>g.s==="final") ? "Final" : w.games.some(g=>g.s!=="upcoming") ? "In progress" : "Upcoming";
+  $("#wk-title").innerHTML = `Week ${W.wk} of ${SEASON.total}<small>${esc(W.dates)} · ${statusOf(W)}</small>`;
+  $("#wk-prev").disabled = sstate.idx===0;
+  $("#wk-next").disabled = sstate.idx===WEEKS.length-1;
+  $("#wk-sel").value = String(sstate.idx);
+
+  let games = W.games.filter(g=>{
+    if(sstate.team && g.a!==sstate.team && g.h!==sstate.team) return false;
+    if(sstate.div && !isDiv(g)) return false;
+    if(sstate.prime && !(g.slot || g.intl)) return false;
+    return true;
+  });
+  const order = []; const by = {};
+  games.forEach(g=>{ if(!by[g.day]){by[g.day]=[]; order.push(g.day);} by[g.day].push(g); });
+  let html = order.map(d=>{
+    const gs = by[d];
+    return `<div class="dayh"><h3>${esc(d)}</h3><span>${gs.length} game${gs.length===1?"":"s"}</span></div><div class="games">${gs.map(gameCard).join("")}</div>`;
+  }).join("");
+  if(!games.length){
+    const onBye = sstate.team && W.byes.includes(sstate.team);
+    html = `<div class="empty">${onBye ? esc(TM[sstate.team].n)+" are on bye in Week "+W.wk+"." : "No games match these filters this week."}</div>`;
+  }
+  if(W.byes.length && !sstate.team){
+    html += `<div class="byes"><b>On bye</b>${W.byes.map(c=>esc(TM[c].n)).join(" · ")}</div>`;
+  }
+  $("#sched").innerHTML = html;
+  $("#s-count").textContent = `${games.length} of ${W.games.length} games · times in Central Time`;
+}
+function initSchedule(){
+  $("#wk-sel").innerHTML = WEEKS.map((w,i)=>{
+    const st = w.games.every(g=>g.s==="final") ? "Final" : w.games.some(g=>g.s!=="upcoming") ? "In progress" : "Upcoming";
+    return `<option value="${i}">Week ${w.wk} · ${st}</option>`;
+  }).join("");
+  $("#s-team").innerHTML += [...T].sort((a,b)=>a.n.localeCompare(b.n)).map(t=>`<option value="${t.a}">${esc(t.n)}</option>`).join("");
+  $("#wk-prev").addEventListener("click",()=>{ if(sstate.idx>0){sstate.idx--; renderSchedule();} });
+  $("#wk-next").addEventListener("click",()=>{ if(sstate.idx<WEEKS.length-1){sstate.idx++; renderSchedule();} });
+  $("#wk-sel").addEventListener("change",e=>{ sstate.idx=+e.target.value; renderSchedule(); });
+  $("#s-team").addEventListener("change",e=>{ sstate.team=e.target.value; renderSchedule(); });
+  [["s-div","div"],["s-prime","prime"]].forEach(([id,k])=>$("#"+id).addEventListener("click",e=>{
+    sstate[k]=!sstate[k]; e.currentTarget.setAttribute("aria-pressed",String(sstate[k])); renderSchedule();
+  }));
+  $("#tabweek").textContent = "· Week " + SEASON.current;
+  renderPhase();
+  renderSchedule();
+}
+
+/* ---------- Tabs ---------- */
+function showTab(which, remember){
+  const sched = which==="sched";
+  $("#pg-rank").hidden = sched; $("#pg-sched").hidden = !sched;
+  $("#tab-rank").setAttribute("aria-selected", String(!sched));
+  $("#tab-sched").setAttribute("aria-selected", String(sched));
+  if(remember){
+    try{ localStorage.setItem("nflpb-tab", which); }catch(e){}
+    try{ history.replaceState(null, "", sched ? "#schedule" : "#rankings"); }catch(e){}
+  }
+}
+$("#tab-rank").addEventListener("click",()=>showTab("rank",true));
+$("#tab-sched").addEventListener("click",()=>showTab("sched",true));
+$(".tabs").addEventListener("keydown",e=>{
+  if(e.key!=="ArrowRight" && e.key!=="ArrowLeft") return;
+  const next = $("#tab-rank").getAttribute("aria-selected")==="true" ? "sched" : "rank";
+  showTab(next,true); $(next==="sched"?"#tab-sched":"#tab-rank").focus();
+});
+
+document.addEventListener("click", e => {
+  const a = e.target.closest('a[href^="#t-"]');
+  if(!a) return;
+  e.preventDefault();
+  const id = a.getAttribute("href").slice(1);
+  if($("#pg-rank").hidden) showTab("rank",true);
+  if(!document.getElementById(id)){ $("#reset").click(); }
+  document.getElementById(id)?.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
+});
+
+renderStandings();
+render();
+initSchedule();
+(function(){
+  let start = "rank";
+  try{ if(location.hash==="#schedule") start="sched"; else if(location.hash!=="#rankings"){ const s=localStorage.getItem("nflpb-tab"); if(s==="sched") start="sched"; } }catch(e){}
+  showTab(start,false);
+})();
+</script>
+
+</body></html>
